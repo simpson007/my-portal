@@ -1,288 +1,259 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import gsap from 'gsap'
-import ParticleField from './components/visual/ParticleField.vue'
-import FloatingCard from './components/core/FloatingCard.vue'
-import GlitchText from './components/core/GlitchText.vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import VideoBackground from './components/visual/VideoBackground.vue'
 import CustomCursor from './components/core/CustomCursor.vue'
-import CommandPalette from './components/CommandPalette.vue'
-import { useI18n } from './composables/useI18n'
 
-const { t, locale, toggleLocale } = useI18n()
-const isLoaded = ref(false)
+const now = ref(new Date())
+const typedQuote = ref('')
+const quoteText = '竹影扫阶尘不动，月轮穿沼水无痕。'
 
-// 入场动画
-onMounted(() => {
-  isLoaded.value = true
+const mouseX = ref(0.5)
+const mouseY = ref(0.5)
 
-  const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+let timeTimer: number | undefined
+let typeTimer: number | undefined
 
-  tl.from('.digital-garden', {
-    opacity: 0,
-    duration: 0.8
+const timeParts = computed(() => {
+  const formatted = new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  }).format(now.value)
+
+  const [hours, minutes, seconds] = formatted.split(':')
+  return { hours, minutes, seconds }
+})
+
+const parallaxStyle = computed(() => {
+  const x = (mouseX.value - 0.5) * -15
+  const y = (mouseY.value - 0.5) * -15
+  return {
+    transform: `translate(${x}px, ${y}px)`
+  }
+})
+
+const skills = ['Vue 3', 'WebGL', 'TypeScript', 'Three.js']
+
+const dockItems = [
+  {
+    label: '博客',
+    href: '#blog',
+    paths: [
+      'M7.5 4.5h9a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2v-11a2 2 0 0 1 2-2Z',
+      'M9 9h6',
+      'M9 13h6'
+    ],
+    circles: []
+  },
+  {
+    label: '游戏',
+    href: '#games',
+    paths: [
+      'M7.5 11h9a3 3 0 0 1 2.9 2.2l.5 2.4a2.5 2.5 0 0 1-2.4 3.1h-1.2a2.5 2.5 0 0 1-2.2-1.2l-.4-.7a2 2 0 0 0-1.7-1h-2a2 2 0 0 0-1.7 1l-.4.7a2.5 2.5 0 0 1-2.2 1.2H6.8A2.5 2.5 0 0 1 4.4 15l.5-2.4A3 3 0 0 1 7.5 11Z',
+      'M8.7 14h2.1',
+      'M9.75 12.9v2.2'
+    ],
+    circles: [{ cx: 16.3, cy: 14, r: 0.8 }]
+  },
+  {
+    label: '工具',
+    href: '#tools',
+    paths: [
+      'M12 2.5v2.5',
+      'M12 19v2.5',
+      'M2.5 12h2.5',
+      'M19 12h2.5',
+      'M4.6 4.6l1.8 1.8',
+      'M17.6 17.6l1.8 1.8',
+      'M4.6 19.4l1.8-1.8',
+      'M17.6 6.4l1.8-1.8'
+    ],
+    circles: [{ cx: 12, cy: 12, r: 3.2 }]
+  },
+  {
+    label: '开源',
+    href: 'https://github.com/yushenjian',
+    paths: [
+      'M8.5 9.5L5 12l3.5 2.5',
+      'M15.5 9.5L19 12l-3.5 2.5',
+      'M10 19l4-14'
+    ],
+    circles: []
+  },
+  {
+    label: '联系',
+    href: 'mailto:hello@yushenjian.com',
+    paths: [
+      'M4.5 7.5h15a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Z',
+      'M4.5 9l7.5 5 7.5-5'
+    ],
+    circles: []
+  }
+]
+
+const handleMouseMove = (e: MouseEvent) => {
+  mouseX.value = e.clientX / window.innerWidth
+  mouseY.value = e.clientY / window.innerHeight
+
+  const cards = document.querySelectorAll('.glass-panel') as NodeListOf<HTMLElement>
+  cards.forEach(card => {
+    const rect = card.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    card.style.setProperty('--mouse-x', `${x}px`)
+    card.style.setProperty('--mouse-y', `${y}px`)
   })
-    .from('.floating-card', {
-      y: 80,
-      opacity: 0,
-      duration: 1,
-      stagger: 0.15,
-      ease: 'power4.out'
-    })
-    .from('.cmd-hint', {
-      opacity: 0,
-      y: 20,
-      duration: 0.6
-    }, '-=0.3')
+}
+
+onMounted(() => {
+  window.addEventListener('mousemove', handleMouseMove)
+
+  timeTimer = window.setInterval(() => {
+    now.value = new Date()
+  }, 1000)
+
+  let index = 0
+  const typeNext = () => {
+    typedQuote.value = quoteText.slice(0, index)
+    if (index < quoteText.length) {
+      index += 1
+      typeTimer = window.setTimeout(typeNext, 80)
+    }
+  }
+
+  typeTimer = window.setTimeout(typeNext, 1000)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('mousemove', handleMouseMove)
+  if (timeTimer) {
+    window.clearInterval(timeTimer)
+  }
+  if (typeTimer) {
+    window.clearTimeout(typeTimer)
+  }
 })
 </script>
 
 <template>
-  <div class="min-h-screen w-full overflow-hidden bg-[#0a0a0f]">
+  <div class="relative min-h-screen overflow-hidden">
     <CustomCursor />
-    <ParticleField />
+    <VideoBackground />
 
-    <!-- 语言切换按钮 -->
-    <button
-      @click="toggleLocale"
-      class="fixed top-4 right-4 z-50 px-3 py-1.5 text-xs font-mono bg-white/5 text-white/60 rounded-full border border-white/10 hover:border-accent/50 hover:text-accent transition-all duration-300"
+    <div
+      class="relative z-10 min-h-screen p-6 sm:p-8 lg:p-10 transition-transform duration-500 ease-out"
+      :style="parallaxStyle"
     >
-      {{ locale === 'zh' ? 'EN' : '中文' }}
-    </button>
-
-    <main class="relative z-10 min-h-screen flex items-center justify-center p-4 md:p-6 lg:p-8">
-      <div class="w-full max-w-6xl">
-        <div class="digital-garden relative">
-          <!-- Profile Card -->
-          <FloatingCard
-            size="lg"
-            class="floating-card profile-card mb-5"
-            :float-delay="0"
-            :float-duration="8"
-            :float-distance="20"
-          >
-            <div class="flex flex-col h-full">
-              <div class="flex items-start gap-4 mb-4">
-                <div class="relative group">
-                  <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-accent via-emerald-500 to-teal-600 p-0.5 transition-transform duration-500 group-hover:scale-105 group-hover:rotate-3">
-                    <div class="w-full h-full rounded-2xl bg-[#0a0a0f] flex items-center justify-center text-2xl md:text-3xl font-bold text-accent font-mono">
-                      Y
-                    </div>
-                  </div>
-                  <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#0a0a0f] animate-pulse shadow-lg shadow-green-500/50" />
-                  <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent/20 to-emerald-600/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                </div>
-                <div class="flex-1">
-                  <GlitchText
-                    :text="t.profile.name"
-                    class="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-1 block"
-                    :glitch-on-hover="true"
-                  />
-                  <p class="text-white/60 font-mono text-xs tracking-wide">
-                    <span class="text-accent">&gt;_</span> {{ t.profile.title }}
-                  </p>
-                </div>
-              </div>
-
-              <div class="mb-4 flex-1">
-                <p class="text-white/80 leading-relaxed text-sm md:text-base">
-                  <span class="text-accent font-mono text-lg mr-2">&gt;</span>
-                  <span class="font-light">{{ t.profile.slogan }}</span> {{ t.profile.description }}
-                </p>
-                <p class="text-white/60 leading-relaxed mt-1.5 text-xs md:text-sm pl-6">
-                  {{ t.profile.specializing }} <span class="text-accent font-mono">Vue</span>, 
-                  <span class="text-accent font-mono">TypeScript</span> {{ t.profile.and }} 
-                  <span class="text-accent font-mono">WebGL</span>。
-                </p>
-              </div>
-
-              <div class="flex flex-wrap gap-2">
-                <span class="px-3 py-1.5 text-xs font-mono bg-accent/20 text-accent rounded-full border border-accent/30 hover:bg-accent/30 transition-colors cursor-default backdrop-blur-sm">
-                  {{ t.profile.openToWork }}
-                </span>
-                <span class="px-3 py-1.5 text-xs font-mono bg-white/5 text-white/60 rounded-full border border-white/10 hover:border-white/20 transition-colors cursor-default backdrop-blur-sm">
-                  {{ t.profile.buildingCoolStuff }}
-                </span>
+      <!-- Profile Card - Top Left -->
+      <Transition appear name="float-in">
+        <section
+          class="glass-panel mb-5 w-full max-w-[280px] p-5 md:mb-0 md:absolute md:left-10 md:top-10"
+          style="--delay: 0ms;"
+        >
+          <div class="flex items-center gap-4">
+            <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-600/20 via-teal-500/20 to-cyan-500/20 p-[1px]">
+              <div class="flex h-full w-full items-center justify-center rounded-[11px] bg-[#0a150a]/60 font-serif-display text-sm text-jade">
+                禅
               </div>
             </div>
-          </FloatingCard>
-
-          <!-- Grid Layout -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 auto-rows-auto">
-            <!-- Games Card -->
-            <FloatingCard size="md" class="floating-card hoverable" :float-delay="0.2" :float-duration="6.5" :float-distance="16">
-              <a href="#games" class="block h-full group/link">
-                <div class="flex flex-col h-full">
-                  <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/30 to-pink-500/30 flex items-center justify-center mb-3 group-hover/link:scale-110 group-hover/link:rotate-6 transition-all duration-300 border border-purple-500/20">
-                    <span class="text-xl">🎮</span>
-                  </div>
-                  <h3 class="text-lg font-bold text-white mb-2 group-hover/link:text-accent transition-colors font-mono">
-                    {{ t.cards.games }}
-                  </h3>
-                  <p class="text-white/60 text-xs leading-relaxed flex-1">{{ t.cards.gamesDesc }}</p>
-                  <div class="flex items-center text-accent text-xs font-mono mt-3 opacity-0 group-hover/link:opacity-100 transition-all duration-300">
-                    <span>{{ t.cards.playNow }}</span>
-                    <svg class="w-3 h-3 ml-1 transform group-hover/link:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </div>
-              </a>
-            </FloatingCard>
-
-            <!-- Blog Card -->
-            <FloatingCard size="md" class="floating-card hoverable" :float-delay="0.4" :float-duration="7" :float-distance="12">
-              <a href="https://blog.yushenjian.com" class="block h-full group/link">
-                <div class="flex flex-col h-full">
-                  <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/30 flex items-center justify-center mb-3 group-hover/link:scale-110 transition-transform duration-300 border border-blue-500/20">
-                    <span class="text-xl">📝</span>
-                  </div>
-                  <h3 class="text-lg font-bold text-white mb-2 group-hover/link:text-accent transition-colors font-mono">
-                    {{ t.cards.blog }}
-                  </h3>
-                  <p class="text-white/60 text-xs leading-relaxed flex-1">{{ t.cards.blogDesc }}</p>
-                  <div class="flex items-center text-accent text-xs font-mono mt-3 opacity-0 group-hover/link:opacity-100 transition-all duration-300">
-                    <span>{{ t.cards.readMore }}</span>
-                    <svg class="w-3 h-3 ml-1 transform group-hover/link:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </div>
-              </a>
-            </FloatingCard>
-
-            <!-- Tools Card -->
-            <FloatingCard size="md" class="floating-card hoverable" :float-delay="0.6" :float-duration="6.8" :float-distance="14">
-              <a href="#tools" class="block h-full group/link">
-                <div class="flex flex-col h-full">
-                  <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500/30 to-red-500/30 flex items-center justify-center mb-3 group-hover/link:scale-110 group-hover/link:-rotate-6 transition-all duration-300 border border-orange-500/20">
-                    <span class="text-xl">🔧</span>
-                  </div>
-                  <h3 class="text-lg font-bold text-white mb-2 group-hover/link:text-accent transition-colors font-mono">
-                    {{ t.cards.tools }}
-                  </h3>
-                  <p class="text-white/60 text-xs leading-relaxed flex-1">{{ t.cards.toolsDesc }}</p>
-                  <div class="flex items-center text-accent text-xs font-mono mt-3 opacity-0 group-hover/link:opacity-100 transition-all duration-300">
-                    <span>{{ t.cards.explore }}</span>
-                    <svg class="w-3 h-3 ml-1 transform group-hover/link:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </div>
-              </a>
-            </FloatingCard>
-
-            <!-- Connect Card -->
-            <FloatingCard size="md" class="floating-card lg:col-span-3" :float-delay="0.8" :float-duration="7.5" :float-distance="10">
-              <div>
-                <h3 class="text-lg font-bold text-white mb-4 font-mono">{{ t.cards.connect }}</h3>
-                <div style="display: flex; gap: 16px;">
-                  <a href="https://github.com/yushenjian" target="_blank" rel="noopener noreferrer"
-                    style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 80px; height: 80px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);"
-                    class="social-link group/social hover:border-accent/50 transition-all duration-300">
-                    <svg style="width: 24px; height: 24px; margin-bottom: 8px;" class="text-white/70 group-hover/social:text-accent" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                    </svg>
-                    <span class="text-xs font-mono text-white/50 group-hover/social:text-accent">{{ t.social.github }}</span>
-                  </a>
-                  <a href="https://twitter.com/yushenjian" target="_blank" rel="noopener noreferrer"
-                    style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 80px; height: 80px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);"
-                    class="social-link group/social hover:border-accent/50 transition-all duration-300">
-                    <svg style="width: 24px; height: 24px; margin-bottom: 8px;" class="text-white/70 group-hover/social:text-accent" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                    </svg>
-                    <span class="text-xs font-mono text-white/50 group-hover/social:text-accent">{{ t.social.twitter }}</span>
-                  </a>
-                  <a href="https://linkedin.com/in/yushenjian" target="_blank" rel="noopener noreferrer"
-                    style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 80px; height: 80px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);"
-                    class="social-link group/social hover:border-accent/50 transition-all duration-300">
-                    <svg style="width: 24px; height: 24px; margin-bottom: 8px;" class="text-white/70 group-hover/social:text-accent" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                    </svg>
-                    <span class="text-xs font-mono text-white/50 group-hover/social:text-accent">{{ t.social.linkedin }}</span>
-                  </a>
-                  <a href="mailto:contact@yushenjian.com"
-                    style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 80px; height: 80px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);"
-                    class="social-link group/social hover:border-accent/50 transition-all duration-300">
-                    <svg style="width: 24px; height: 24px; margin-bottom: 8px;" class="text-white/70 group-hover/social:text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                      <polyline points="22,6 12,13 2,6"/>
-                    </svg>
-                    <span class="text-xs font-mono text-white/50 group-hover/social:text-accent">{{ t.social.email }}</span>
-                  </a>
-                </div>
+            <div>
+              <h1 class="font-serif-display text-lg text-jade tracking-wide">于慎简</h1>
+              <div class="mt-1 flex items-center gap-2">
+                <span class="status-dot"></span>
+                <span class="text-xs text-jade-dim italic">前端艺术家 / 创意开发</span>
               </div>
-            </FloatingCard>
+            </div>
           </div>
-        </div>
-
-        <!-- Cmd+K 提示 -->
-        <div class="cmd-hint flex justify-center mt-8">
-          <div class="flex items-center gap-2 text-white/40 text-xs font-mono group cursor-default">
-            <span class="group-hover:text-white/60 transition-colors">{{ t.command.hint }}</span>
-            <kbd class="px-2 py-1 bg-white/5 border border-white/10 rounded text-[10px] font-mono backdrop-blur-sm group-hover:border-accent/30 group-hover:bg-accent/5 transition-all duration-300">
-              ⌘K
-            </kbd>
-            <span class="group-hover:text-white/60 transition-colors">{{ t.command.forCommands }}</span>
+          <!-- Skill Tags -->
+          <div class="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs">
+            <span
+              v-for="skill in skills"
+              :key="skill"
+              class="skill-tag"
+            >
+              {{ skill }}
+            </span>
           </div>
-        </div>
-      </div>
-    </main>
+        </section>
+      </Transition>
 
-    <CommandPalette />
+      <!-- Clock - Top Right -->
+      <Transition appear name="float-in">
+        <section
+          class="glass-panel mb-5 w-full max-w-[260px] p-5 md:mb-0 md:absolute md:right-10 md:top-10"
+          style="--delay: 150ms;"
+        >
+          <p class="text-[10px] uppercase tracking-[0.3em] text-jade-muted">当前时间</p>
+          <div class="mt-3 flex items-baseline gap-1">
+            <span class="font-serif-display text-4xl sm:text-5xl text-jade tabular-nums tracking-tight">
+              {{ timeParts.hours }}<span class="text-jade-muted">:</span>{{ timeParts.minutes }}
+            </span>
+            <span class="font-serif-display text-xl text-jade-dim tabular-nums">{{ timeParts.seconds }}</span>
+          </div>
+        </section>
+      </Transition>
+
+      <!-- Daily Quote - Bottom Right -->
+      <Transition appear name="float-in">
+        <section
+          class="glass-panel w-full max-w-[280px] p-5 md:absolute md:bottom-10 md:right-10"
+          style="--delay: 450ms;"
+        >
+          <p class="text-[10px] uppercase tracking-[0.3em] text-jade-muted">禅语</p>
+          <p class="mt-3 text-base leading-relaxed text-jade-dim font-light tracking-wider">
+            <span>{{ typedQuote }}</span>
+            <span class="type-caret" aria-hidden="true"></span>
+          </p>
+        </section>
+      </Transition>
+    </div>
+
+    <!-- Dock Navigation - Fixed Bottom Center (Outside Parallax) -->
+    <Transition appear name="float-in">
+      <section
+        class="glass-panel fixed z-20 mb-5 w-full max-w-md px-5 py-3 md:mb-0 md:bottom-10 left-1/2 -translate-x-1/2"
+        style="--delay: 300ms;"
+      >
+        <nav class="flex items-center justify-around">
+          <a
+            v-for="item in dockItems"
+            :key="item.label"
+            :href="item.href"
+            class="dock-item"
+            :rel="item.href.startsWith('http') ? 'noreferrer' : undefined"
+            :target="item.href.startsWith('http') ? '_blank' : undefined"
+          >
+            <span class="dock-tooltip">{{ item.label }}</span>
+            <span class="dock-icon">
+              <svg
+                class="h-5 w-5 text-jade-dim"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  v-for="(path, pathIndex) in item.paths"
+                  :key="`${item.label}-path-${pathIndex}`"
+                  :d="path"
+                />
+                <circle
+                  v-for="(circle, circleIndex) in item.circles"
+                  :key="`${item.label}-circle-${circleIndex}`"
+                  :cx="circle.cx"
+                  :cy="circle.cy"
+                  :r="circle.r"
+                  fill="currentColor"
+                  stroke="none"
+                />
+              </svg>
+            </span>
+          </a>
+        </nav>
+      </section>
+    </Transition>
   </div>
 </template>
-
-<style scoped>
-.digital-garden {
-  perspective: 1000px;
-}
-
-.profile-card {
-  grid-column: 1 / -1;
-}
-
-.hoverable {
-  cursor: pointer;
-}
-
-.social-link {
-  position: relative;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.social-link:hover {
-  transform: translateY(-4px);
-  box-shadow: 
-    0 10px 25px -5px rgba(16, 185, 129, 0.2),
-    0 0 20px rgba(16, 185, 129, 0.15);
-}
-
-@keyframes icon-glow {
-  0%, 100% {
-    filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.3));
-  }
-  50% {
-    filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.6));
-  }
-}
-
-.social-link:hover svg {
-  animation: icon-glow 2s ease-in-out infinite;
-}
-
-* {
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  * {
-    cursor: none !important;
-  }
-}
-
-@media (max-width: 768px) {
-  .digital-garden {
-    perspective: none;
-  }
-}
-</style>

@@ -4,49 +4,34 @@ export default {
     "./index.html",
     "./src/**/*.{vue,js,ts,jsx,tsx}",
   ],
-  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        'dark': '#0a0a0f',
-        'dark-secondary': '#0f172a',
-        'accent': '#10b981',
-        'accent-dim': '#059669',
-        'neon-green': '#10b981',
-        'neon-teal': '#14b8a6',
-        'cyber-blue': '#06b6d4',
+        'glass': {
+          'dark': 'rgba(0, 0, 0, 0.3)',
+          'border': 'rgba(255, 255, 255, 0.1)',
+        },
       },
       fontFamily: {
-        'mono': ['JetBrains Mono', 'monospace'],
-        'sans': ['Inter', 'sans-serif'],
+        'sans': ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        'display': ['Playfair Display', 'Georgia', 'serif'],
       },
       animation: {
-        'glow': 'glow 3s ease-in-out infinite alternate',
-        'float': 'float 6s ease-in-out infinite',
-        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'shimmer': 'shimmer 2s linear infinite',
+        'float-gentle': 'floatGentle 8s ease-in-out infinite',
       },
       keyframes: {
-        glow: {
-          '0%': { 
-            boxShadow: '0 0 20px rgba(16, 185, 129, 0.4), 0 0 40px rgba(16, 185, 129, 0.2)' 
-          },
-          '100%': { 
-            boxShadow: '0 0 30px rgba(16, 185, 129, 0.6), 0 0 60px rgba(16, 185, 129, 0.3), 0 0 80px rgba(16, 185, 129, 0.1)' 
-          }
+        floatGentle: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-6px)' }
         },
-        float: {
-          '0%, 100%': { transform: 'translateY(0) rotate(0deg)' },
-          '50%': { transform: 'translateY(-20px) rotate(1deg)' }
-        },
-        shimmer: {
-          '0%': { backgroundPosition: '-200% 0' },
-          '100%': { backgroundPosition: '200% 0' }
-        }
       },
       backdropBlur: {
-        xs: '2px',
-      }
+        '3xl': '64px',
+      },
+      boxShadow: {
+        'glass': '0 8px 32px rgba(0, 0, 0, 0.3)',
+        'glass-hover': '0 16px 48px rgba(0, 0, 0, 0.4)',
+      },
     },
   },
   plugins: [],
