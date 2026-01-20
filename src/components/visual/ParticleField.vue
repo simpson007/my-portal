@@ -249,8 +249,8 @@ const animate = () => {
 
   // Update uniforms
   const material = particles.material as THREE.ShaderMaterial
-  material.uniforms.uTime.value = performance.now() / 1000
-  material.uniforms.uMouse.value.set(mouseX, mouseY)
+  if (material.uniforms.uTime) material.uniforms.uTime.value = performance.now() / 1000
+  if (material.uniforms.uMouse) material.uniforms.uMouse.value.set(mouseX, mouseY)
 
   // Subtle camera movement
   camera.position.x = mouseX * 2
@@ -278,7 +278,7 @@ const handleResize = () => {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
   const material = particles.material as THREE.ShaderMaterial
-  material.uniforms.uPixelRatio.value = Math.min(window.devicePixelRatio, 2)
+  if (material.uniforms.uPixelRatio) material.uniforms.uPixelRatio.value = Math.min(window.devicePixelRatio, 2)
 }
 
 onMounted(() => {

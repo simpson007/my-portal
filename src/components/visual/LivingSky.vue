@@ -208,7 +208,7 @@ const init = () => {
 }
 
 const handleResize = () => {
-  if (!renderer || !material) return
+  if (!renderer || !material?.uniforms?.uResolution) return
   const width = window.innerWidth
   const height = window.innerHeight
   const dpr = Math.min(window.devicePixelRatio, 2)
@@ -225,7 +225,7 @@ const handleMouseMove = (event: MouseEvent) => {
 }
 
 const animate = () => {
-  if (!renderer || !scene || !camera || !material) return
+  if (!renderer || !scene || !camera || !material?.uniforms?.uMouse || !material?.uniforms?.uTime) return
 
   mouse.lerp(targetMouse, 0.06)
   material.uniforms.uMouse.value.copy(mouse)

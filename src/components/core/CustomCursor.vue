@@ -18,9 +18,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 
-const cursorRingRef = ref<HTMLDivElement>()
-const cursorDotRef = ref<HTMLDivElement>()
-
 const dotX = ref(0)
 const dotY = ref(0)
 const ringX = ref(0)

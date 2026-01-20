@@ -72,7 +72,7 @@ const cardStyle = computed(() => {
 
   return {
     transform: `perspective(1000px) rotateX(${tiltX.value}deg) rotateY(${tiltY.value}deg)`,
-    transformStyle: 'preserve-3d',
+    transformStyle: 'preserve-3d' as const,
     transition: isOutside.value ? 'transform 0.3s ease-out' : 'none'
   }
 })
